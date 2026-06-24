@@ -1,0 +1,6 @@
+konlpy
+matplotlib
+pandas
+pymupdf
+torch
+wordcloud
