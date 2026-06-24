@@ -4,6 +4,7 @@ from collections import Counter
 
 import torch
 import matplotlib.pyplot as plt
+from matplotlib import font_manager as fm
 from wordcloud import WordCloud, STOPWORDS
 from konlpy.tag import Okt
 
@@ -52,7 +53,7 @@ def make_wordcloud_from_freq(counter, font_path, output_image="wordcloud_ko.png"
         width=1600,
         height=900,
         background_color="white",
-        max_words=200,
+        max_words=100,
         colormap="viridis",
         collocations=False
     ).generate_from_frequencies(counter)
@@ -87,6 +88,11 @@ def make_report_tables(counter, top_n=20):
     return df
 
 def plot_top_words(freq_df, output_image="top_words_bar.png"):
+    font_path = "C:/Windows/Fonts/malgun.ttf"
+    font_name = fm.FontProperties(fname=font_path).get_name()
+    plt.rcParams['font.family'] = font_name
+    plt.rcParams['axes.unicode_minus'] = False
+
     plt.figure(figsize=(10, 6))
     plt.barh(freq_df["word"][::-1], freq_df["frequency"][::-1], color="steelblue")
     plt.xlabel("Frequency")
@@ -113,7 +119,7 @@ def save_wordcloud_from_counter(counter, font_path, output_image="wordcloud_repo
         width=1600,
         height=900,
         background_color="white",
-        max_words=200,
+        max_words=50,
         collocations=False,
         colormap="viridis"
     ).generate_from_frequencies(counter)
@@ -138,3 +144,28 @@ summary_text = (
 )
 
 print(summary_text)
+
+def build_report_paragraph(counter, top_n=10):
+    total_tokens = sum(counter.values())
+    unique_tokens = len(counter)
+    top_items = counter.most_common(top_n)
+
+    if not top_items:
+        return "분석 결과, 유의미한 명사가 충분히 추출되지 않았습니다."
+
+    top_words = [w for w, _ in top_items[:5]]
+    top_word, top_freq = top_items[0]
+    top_word_df = pd.DataFrame(top_items, columns=["word", "frequency"])
+    avg_freq = round(top_word_df["frequency"].mean(), 2)
+
+    paragraph = (
+        f"분석 결과, 총 {total_tokens}개의 명사가 추출되었고 고유 명사는 {unique_tokens}개였다. "
+        f"가장 많이 등장한 단어는 '{top_word}'로 {top_freq}회 나타났으며, "
+        f"상위 빈도 단어는 {', '.join(top_words)} 순으로 확인되었다. "
+        f"상위 {min(top_n, len(top_items))}개 단어의 평균 빈도는 {avg_freq}회로, "
+        f"문서의 핵심 주제가 이들 단어에 집중되어 있음을 보여준다."
+    )
+    return paragraph
+
+report_paragraph = build_report_paragraph(counter, top_n=10)
+print(report_paragraph)
